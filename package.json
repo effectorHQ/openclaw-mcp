@@ -1,5 +1,5 @@
 {
-  "name": "@openclawHQ/skill-mcp",
+  "name": "@effectorhq/skill-mcp",
   "version": "0.1.0",
   "description": "Bridge between OpenClaw SKILL.md format and Model Context Protocol (MCP)",
   "type": "module",
@@ -25,14 +25,14 @@
     "skills",
     "bridge"
   ],
-  "author": "OpenClawHQ Contributors",
+  "author": "effectorHQ Contributors",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/OpenClawHQ/openclaw-mcp.git"
+    "url": "https://github.com/effectorHQ/openclaw-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/OpenClawHQ/openclaw-mcp/issues"
+    "url": "https://github.com/effectorHQ/openclaw-mcp/issues"
   },
-  "homepage": "https://github.com/OpenClawHQ/openclaw-mcp#readme"
+  "homepage": "https://github.com/effectorHQ/openclaw-mcp#readme"
 }

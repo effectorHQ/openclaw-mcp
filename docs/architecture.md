@@ -36,7 +36,7 @@ Between `---` delimiters, defining metadata:
 name: EmailSender
 description: Send emails via SMTP
 version: 1.0.0
-author: OpenClawHQ
+author: effectorHQ
 requires:
   env:
     - SMTP_HOST
@@ -105,7 +105,7 @@ An MCP tool definition is a JSON object with:
   },
   "_metadata": {
     "version": "1.0.0",
-    "author": "OpenClawHQ",
+    "author": "effectorHQ",
     "skillPath": "./skills/email-sender.md"
   }
 }

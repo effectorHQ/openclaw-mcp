@@ -162,7 +162,7 @@ Examples:
   # Validate all files in directory
   skill-mcp validate ./skills/
 
-For more information, visit: https://github.com/OpenClawHQ/openclaw-mcp
+For more information, visit: https://github.com/effectorHQ/openclaw-mcp
   `);
 }
 

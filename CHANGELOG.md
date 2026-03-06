@@ -28,4 +28,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advanced SKILL.md features (scheduling, custom metadata) require additional development
 - Error handling and validation are in early stages
 
-[0.1.0]: https://github.com/OpenClawHQ/openclaw-mcp/releases/tag/v0.1.0
+[0.1.0]: https://github.com/effectorHQ/openclaw-mcp/releases/tag/v0.1.0

@@ -1,7 +1,7 @@
 # openclaw-mcp
 
-[![npm version](https://img.shields.io/npm/v/@openclawHQ/skill-mcp.svg)](https://www.npmjs.com/package/@openclawHQ/skill-mcp)
-[![CI](https://img.shields.io/github/actions/workflow/status/OpenClawHQ/openclaw-mcp/ci.yml?branch=main)](https://github.com/OpenClawHQ/openclaw-mcp/actions)
+[![npm version](https://img.shields.io/npm/v/@effectorhq/skill-mcp.svg)](https://www.npmjs.com/package/@effectorhq/skill-mcp)
+[![CI](https://img.shields.io/github/actions/workflow/status/effectorHQ/openclaw-mcp/ci.yml?branch=main)](https://github.com/effectorHQ/openclaw-mcp/actions)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
@@ -33,13 +33,13 @@ Converts SKILL.md skill definitions into MCP-compatible tool definitions. Your O
 ### Installation
 
 ```bash
-npm install -D @openclawHQ/skill-mcp
+npm install -D @effectorhq/skill-mcp
 ```
 
 ### Start MCP Server
 
 ```bash
-npx @openclawHQ/skill-mcp serve ./skills/
+npx @effectorhq/skill-mcp serve ./skills/
 ```
 
 The server listens on stdin/stdout (MCP standard) and exposes all SKILL.md files in `./skills/` as MCP tools.
@@ -53,7 +53,7 @@ Add to `~/.claude/desktop/config.json` (macOS/Linux) or `%APPDATA%\Claude\claude
   "mcpServers": {
     "openclaw": {
       "command": "node",
-      "args": ["[path-to-node-modules]/@openclawHQ/skill-mcp/bin/skill-mcp.js", "serve", "./skills"]
+      "args": ["[path-to-node-modules]/@effectorhq/skill-mcp/bin/skill-mcp.js", "serve", "./skills"]
     }
   }
 }
@@ -137,7 +137,7 @@ skill-mcp --help
 Parses a SKILL.md file into a skill object.
 
 ```javascript
-import { parseSkill } from '@openclawHQ/skill-mcp';
+import { parseSkill } from '@effectorhq/skill-mcp';
 
 const skill = await parseSkill('./skills/my-skill.md');
 console.log(skill.frontmatter.name);
@@ -148,7 +148,7 @@ console.log(skill.frontmatter.name);
 Converts a parsed skill to MCP tool schema.
 
 ```javascript
-import { convertToMCPTool, parseSkill } from '@openclawHQ/skill-mcp';
+import { convertToMCPTool, parseSkill } from '@effectorhq/skill-mcp';
 
 const skill = await parseSkill('./skills/my-skill.md');
 const mcpTool = convertToMCPTool(skill);
@@ -161,7 +161,7 @@ console.log(mcpTool);
 Creates and returns a JSON-RPC 2.0 MCP server.
 
 ```javascript
-import { createMCPServer } from '@openclawHQ/skill-mcp';
+import { createMCPServer } from '@effectorhq/skill-mcp';
 
 const server = createMCPServer('./skills');
 await server.start();
@@ -191,4 +191,4 @@ Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT © 2026 OpenClawHQ Contributors
+MIT © 2026 effectorHQ Contributors
