@@ -106,10 +106,34 @@ export async function createServer(skillsDirectory) {
       // - tools/call: { id, method: 'tools/call', params: { name, arguments } }
       // - shutdown: Signal graceful shutdown
 
-      console.error('[MCP Server] TODO: JSON-RPC 2.0 server not yet implemented');
+      // JSON-RPC 2.0 over stdin/stdout
+      const readline = await import('node:readline');
+      const rl = readline.createInterface({ input: process.stdin });
 
-      // For now, prevent process exit during development
-      // await new Promise(() => {}); // Never resolves
+      rl.on('line', (line) => {
+        try {
+          const request = JSON.parse(line);
+          const response = this.handleRequest(request);
+          if (response && request.id !== undefined) {
+            process.stdout.write(JSON.stringify(response) + '\n');
+          }
+        } catch (err) {
+          const errResponse = {
+            jsonrpc: '2.0',
+            error: { code: -32700, message: 'Parse error: ' + err.message },
+            id: null,
+          };
+          process.stdout.write(JSON.stringify(errResponse) + '\n');
+        }
+      });
+
+      rl.on('close', () => {
+        console.error('[MCP Server] stdin closed, shutting down');
+        process.exit(0);
+      });
+
+      console.error('[MCP Server] JSON-RPC 2.0 server listening on stdin/stdout');
+      await new Promise(() => {}); // Keep alive
     },
 
     /**
@@ -149,16 +173,32 @@ export async function createServer(skillsDirectory) {
               },
             };
 
-          case 'tools/call':
-            // TODO: Implement tool execution
-            // params: { name: string, arguments: { [key]: value } }
+          case 'tools/call': {
+            const { name: toolName, arguments: toolArgs } = params || {};
+            const tool = this.tools.find(t => t.name === toolName);
+            if (!tool) {
+              return {
+                id,
+                error: {
+                  code: -32602,
+                  message: `Unknown tool: ${toolName}. Available: ${this.tools.map(t => t.name).join(', ')}`,
+                },
+              };
+            }
+            // Return the skill's SKILL.md content as the tool's "execution result"
+            // In a full implementation, this would invoke the skill in a sandbox.
+            // For now, returning the skill instructions is sufficient for MCP clients
+            // that pass them to an LLM for execution.
             return {
               id,
-              error: {
-                code: -32603,
-                message: 'Tool execution not yet implemented',
+              result: {
+                content: [{
+                  type: 'text',
+                  text: tool._skillContent || `Skill "${toolName}" loaded. Execute according to SKILL.md instructions.`,
+                }],
               },
             };
+          }
 
           case 'notifications/shutdown':
             console.error('[MCP Server] Shutdown requested');
