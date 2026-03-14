@@ -3,12 +3,19 @@
 /**
  * openclaw-mcp CLI
  *
- * Converts OpenClaw SKILL.md files to MCP (Model Context Protocol) tool definitions
- * and provides a JSON-RPC 2.0 server for MCP-compatible clients.
+ * Compile → Host → Execute pipeline for effector skills.
+ *
+ * Commands:
+ *   compile <dir>     Compile effector.toml + SKILL.md → MCP tool JSON
+ *   serve <dir>       Start an MCP server (JSON-RPC 2.0 over stdin/stdout)
+ *   convert <file>    Convert a single SKILL.md to MCP JSON (legacy)
+ *   validate <dir>    Validate all SKILL.md files for MCP compatibility
  */
 
 import { createServer } from '../src/server.js';
-import { parseSkill, convertToMCPTool } from '../src/index.js';
+import { parseSkillFromFile } from '../src/parser.js';
+import { skillToMCPTool, validateSkillForMCP } from '../src/converter.js';
+import { compileSkill, compileDirectory } from '../src/compiler.js';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -23,13 +30,17 @@ async function main() {
   }
 
   if (command === '--version' || command === '-v') {
-    const pkg = JSON.parse(await fs.readFile('./package.json', 'utf-8'));
+    const pkgPath = new URL('../package.json', import.meta.url);
+    const pkg = JSON.parse(await fs.readFile(pkgPath, 'utf-8'));
     console.log(pkg.version);
     process.exit(0);
   }
 
   try {
     switch (command) {
+      case 'compile':
+        await handleCompile(args.slice(1));
+        break;
       case 'serve':
         await handleServe(args.slice(1));
         break;
@@ -51,9 +62,57 @@ async function main() {
 }
 
 /**
- * serve <directory> [--port PORT]
+ * compile <path> [--output FILE]
  *
- * Start an MCP server hosting SKILL.md files from the specified directory.
+ * Compile a skill directory (effector.toml + SKILL.md) or a directory
+ * of skills into MCP tool JSON.
+ */
+async function handleCompile(args) {
+  const targetPath = args[0];
+  const outputIndex = args.indexOf('--output');
+  const outputPath = outputIndex !== -1 ? args[outputIndex + 1] : null;
+
+  if (!targetPath) {
+    console.error('Error: compile requires a path argument');
+    console.error('Usage: skill-mcp compile <path> [--output FILE]');
+    process.exit(1);
+  }
+
+  const resolved = path.resolve(targetPath);
+  const stat = await fs.stat(resolved);
+
+  let result;
+  if (stat.isDirectory()) {
+    // Check if this directory IS a skill (has effector.toml or SKILL.md)
+    const hasToml = await fileExists(path.join(resolved, 'effector.toml'));
+    const hasSkill = await fileExists(path.join(resolved, 'SKILL.md'));
+
+    if (hasToml || hasSkill) {
+      // Single skill directory
+      result = await compileSkill(resolved);
+    } else {
+      // Directory of skills
+      result = await compileDirectory(resolved);
+    }
+  } else {
+    // Single file
+    result = await compileSkill(resolved);
+  }
+
+  const output = JSON.stringify(result, null, 2);
+
+  if (outputPath) {
+    await fs.writeFile(outputPath, output, 'utf-8');
+    console.error(`Compiled: ${targetPath} → ${outputPath}`);
+  } else {
+    console.log(output);
+  }
+}
+
+/**
+ * serve <directory>
+ *
+ * Start an MCP server hosting skills from the specified directory.
  * Listens on stdin/stdout (MCP standard JSON-RPC 2.0).
  */
 async function handleServe(args) {
@@ -61,27 +120,22 @@ async function handleServe(args) {
 
   if (!directory) {
     console.error('Error: serve requires a directory argument');
-    console.error('Usage: skill-mcp serve <directory> [--port PORT]');
+    console.error('Usage: skill-mcp serve <directory>');
     process.exit(1);
   }
 
-  // TODO: Parse optional --port argument
-  // const port = args.includes('--port') ? args[args.indexOf('--port') + 1] : undefined;
+  const resolved = path.resolve(directory);
+  console.error(`[skill-mcp] Starting MCP server for skills in: ${resolved}`);
 
-  console.error(`[skill-mcp] Starting MCP server for skills in: ${directory}`);
-
-  // TODO: Implement server startup
-  // const server = createServer(directory);
-  // await server.start();
-
-  console.error('[skill-mcp] TODO: Server implementation not yet complete');
-  process.exit(1);
+  const server = await createServer(resolved);
+  await server.start();
 }
 
 /**
  * convert <path-to-skill.md> [--output FILE]
  *
  * Convert a single SKILL.md file to MCP JSON schema and output as JSON.
+ * (Legacy command — prefer `compile` which also reads effector.toml)
  */
 async function handleConvert(args) {
   const skillPath = args[0];
@@ -94,19 +148,17 @@ async function handleConvert(args) {
     process.exit(1);
   }
 
-  // TODO: Implement conversion
-  // const skill = await parseSkill(skillPath);
-  // const mcpTool = convertToMCPTool(skill);
-  // const output = JSON.stringify(mcpTool, null, 2);
-  // if (outputPath) {
-  //   await fs.writeFile(outputPath, output, 'utf-8');
-  //   console.log(`Converted: ${skillPath} → ${outputPath}`);
-  // } else {
-  //   console.log(output);
-  // }
+  const resolved = path.resolve(skillPath);
+  const skill = await parseSkillFromFile(resolved);
+  const mcpTool = skillToMCPTool(skill);
+  const output = JSON.stringify(mcpTool, null, 2);
 
-  console.error('[skill-mcp] TODO: Conversion implementation not yet complete');
-  process.exit(1);
+  if (outputPath) {
+    await fs.writeFile(outputPath, output, 'utf-8');
+    console.error(`Converted: ${skillPath} → ${outputPath}`);
+  } else {
+    console.log(output);
+  }
 }
 
 /**
@@ -123,43 +175,101 @@ async function handleValidate(args) {
     process.exit(1);
   }
 
-  // TODO: Implement validation
-  // - Read all .md files in directory
-  // - Parse each as SKILL.md
-  // - Attempt conversion to MCP tool schema
-  // - Report any errors or warnings
+  const resolved = path.resolve(directory);
+  const entries = await fs.readdir(resolved, { withFileTypes: true, recursive: true });
+  const mdFiles = [];
 
-  console.error('[skill-mcp] TODO: Validation implementation not yet complete');
-  process.exit(1);
+  // Collect all .md files (excluding README)
+  for (const entry of entries) {
+    if (entry.isFile() && entry.name.endsWith('.md') && entry.name !== 'README.md' && entry.name !== 'README.zh.md') {
+      const dir = entry.parentPath || entry.path || resolved;
+      mdFiles.push(path.join(dir, entry.name));
+    }
+  }
+
+  if (mdFiles.length === 0) {
+    console.error(`No .md files found in ${directory}`);
+    process.exit(1);
+  }
+
+  let passed = 0;
+  let failed = 0;
+  const allWarnings = [];
+
+  for (const filePath of mdFiles) {
+    const relative = path.relative(resolved, filePath);
+    try {
+      const skill = await parseSkillFromFile(filePath);
+      const warnings = validateSkillForMCP(skill);
+
+      if (warnings.length === 0) {
+        console.log(`  \u2713 ${relative}`);
+        passed++;
+      } else {
+        console.log(`  \u26A0 ${relative}`);
+        for (const w of warnings) {
+          console.log(`    - ${w}`);
+          allWarnings.push({ file: relative, warning: w });
+        }
+        passed++;
+      }
+    } catch (error) {
+      console.log(`  \u2717 ${relative}: ${error.message}`);
+      failed++;
+    }
+  }
+
+  console.log(`\n${passed} passed, ${failed} failed, ${allWarnings.length} warnings`);
+
+  if (failed > 0) {
+    process.exit(1);
+  }
+}
+
+async function fileExists(filePath) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function printHelp() {
   console.log(`
-openclaw-mcp: SKILL.md → Model Context Protocol (MCP) bridge
+openclaw-mcp: Effector Skill → MCP bridge
 
 Usage:
   skill-mcp <command> [options]
 
 Commands:
-  serve <directory>                 Start an MCP server for SKILL.md files
-                                    in the specified directory
+  compile <path> [--output FILE]     Compile effector.toml + SKILL.md → MCP JSON
+                                     (reads typed interface from effector.toml)
 
-  convert <path> [--output FILE]    Convert a SKILL.md file to MCP JSON schema
+  serve <directory>                  Start an MCP server for skills (stdin/stdout)
 
-  validate <directory>              Validate SKILL.md files for MCP compatibility
+  convert <path> [--output FILE]     Convert a single SKILL.md → MCP JSON (legacy)
+
+  validate <directory>               Validate SKILL.md files for MCP compatibility
 
 Options:
-  --help, -h                        Show this help message
-  --version, -v                     Show version number
+  --help, -h                         Show this help message
+  --version, -v                      Show version number
 
 Examples:
+  # Compile a skill directory (reads effector.toml + SKILL.md)
+  skill-mcp compile ./linear-skill/ --output linear.mcp.json
+
+  # Compile all skills in a directory
+  skill-mcp compile ./skills/
+
   # Start MCP server
   skill-mcp serve ./skills/
 
-  # Convert a single file
-  skill-mcp convert ./skills/my-skill.md --output mcp-tool.json
+  # Convert a single SKILL.md file (no effector.toml)
+  skill-mcp convert ./skills/my-skill.md
 
-  # Validate all files in directory
+  # Validate all .md files
   skill-mcp validate ./skills/
 
 For more information, visit: https://github.com/effectorHQ/openclaw-mcp

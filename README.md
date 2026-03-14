@@ -1,6 +1,7 @@
 # openclaw-mcp
 
 [![npm version](https://img.shields.io/npm/v/@effectorhq/skill-mcp.svg)](https://www.npmjs.com/package/@effectorhq/skill-mcp)
+[![Status: Beta](https://img.shields.io/badge/status-beta-yellow)](https://github.com/effectorHQ/REPO-TIERS.md)
 [![CI](https://img.shields.io/github/actions/workflow/status/effectorHQ/openclaw-mcp/ci.yml?branch=main)](https://github.com/effectorHQ/openclaw-mcp/actions)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -10,7 +11,7 @@
 
 ## Overview
 
-**openclaw-mcp** bridges OpenClaw's SKILL.md format to the [Model Context Protocol](https://modelcontextprotocol.io/) (MCP), enabling OpenClaw skills to work with any MCP-compatible agent runtime.
+**openclaw-mcp** bridges the effector SKILL.md format to the [Model Context Protocol](https://modelcontextprotocol.io/) (MCP), enabling effector skills to work with any MCP-compatible agent runtime.
 
 ### What It Does
 

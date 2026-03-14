@@ -2,28 +2,27 @@
  * MCP Server Implementation
  *
  * A JSON-RPC 2.0 server that listens on stdin/stdout and exposes
- * SKILL.md files as MCP tools.
+ * effector skills as MCP tools.
  *
- * Implements the Model Context Protocol specification:
- * - tools/list: Returns available tools
- * - tools/call: Executes a tool with arguments
+ * This is the "host" step in the compile → host → execute pipeline.
+ *
+ * Execution model: "instruction passthrough"
+ * When tools/call is invoked, the server returns the SKILL.md body
+ * as text content. The MCP client (Claude, Cursor, etc.) reads these
+ * instructions and executes them — the server does NOT execute skills
+ * in a sandbox. This is deliberate: skills are agent instructions,
+ * not programs.
  */
 
 import fs from 'fs/promises';
 import path from 'path';
-import { parseSkillFromFile } from './parser.js';
-import { skillToMCPTool } from './converter.js';
+import { compileSkill, compileDirectory } from './compiler.js';
 
 /**
  * Create an MCP server for hosting skills.
  *
- * @param {string} skillsDirectory - Path to directory containing SKILL.md files
- * @returns {Promise<Object>} Server instance with methods:
- *         - start(): Start the server (listen on stdin/stdout)
- *         - loadSkills(): Reload skills from directory
- *         - getTools(): Get list of available tools
- *
- * @throws {Error} If directory doesn't exist
+ * @param {string} skillsDirectory - Path to directory containing skill folders or .md files
+ * @returns {Promise<Object>} Server instance
  */
 export async function createServer(skillsDirectory) {
   // Validate directory exists
@@ -36,77 +35,61 @@ export async function createServer(skillsDirectory) {
   const server = {
     skillsDirectory,
     tools: [],
-    skillMap: new Map(), // skill name → tool definition
+    toolMap: new Map(), // tool name → compiled tool definition
 
     /**
-     * Load all SKILL.md files from the directory.
+     * Load and compile all skills from the directory.
      */
     async loadSkills() {
       this.tools = [];
-      this.skillMap.clear();
+      this.toolMap.clear();
 
       try {
-        const entries = await fs.readdir(this.skillsDirectory, { withFileTypes: true });
+        // Check if the directory itself is a single skill
+        const hasToml = await fileExists(path.join(this.skillsDirectory, 'effector.toml'));
+        const hasSkill = await fileExists(path.join(this.skillsDirectory, 'SKILL.md'));
 
-        for (const entry of entries) {
-          if (entry.isFile() && entry.name.endsWith('.md')) {
-            try {
-              const filePath = path.join(this.skillsDirectory, entry.name);
-              const skill = await parseSkillFromFile(filePath);
-              const tool = skillToMCPTool(skill);
-              this.tools.push(tool);
-              this.skillMap.set(tool.name, tool);
-            } catch (error) {
-              console.error(`[MCP] Error loading skill ${entry.name}: ${error.message}`);
-            }
-          }
+        let compiled;
+        if (hasToml || hasSkill) {
+          // The directory IS a skill — compile it directly
+          const tool = await compileSkill(this.skillsDirectory);
+          compiled = [tool];
+        } else {
+          // The directory contains skills in subdirectories
+          compiled = await compileDirectory(this.skillsDirectory);
+        }
+
+        for (const tool of compiled) {
+          this.tools.push(tool);
+          this.toolMap.set(tool.name, tool);
         }
       } catch (error) {
-        console.error(`[MCP] Error reading directory: ${error.message}`);
+        console.error(`[MCP] Error loading skills: ${error.message}`);
       }
 
       return this.tools;
     },
 
     /**
-     * Get the list of available tools.
-     *
-     * @returns {Array<Object>} Array of MCP tool definitions
+     * Get the list of available tools (MCP-facing, without internal fields).
      */
     getTools() {
-      return this.tools;
+      return this.tools.map(t => ({
+        name: t.name,
+        description: t.description,
+        inputSchema: t.inputSchema,
+      }));
     },
 
     /**
-     * Start the MCP server.
-     *
-     * Listens on stdin for JSON-RPC 2.0 requests and responds on stdout.
-     * Implements:
-     * - initialize: Initialize the server (return server info)
-     * - tools/list: Return list of available tools
-     * - tools/call: Execute a tool (TODO: implement)
-     * - notifications/shutdown: Graceful shutdown
+     * Start the MCP server on stdin/stdout.
      */
     async start() {
       console.error('[MCP Server] Starting...');
 
-      // Load skills from directory
       await this.loadSkills();
       console.error(`[MCP Server] Loaded ${this.tools.length} tools`);
 
-      // TODO: Implement JSON-RPC 2.0 server on stdin/stdout
-      // - Create readline interface on stdin
-      // - Parse JSON-RPC requests
-      // - Dispatch to handler methods
-      // - Send JSON-RPC responses to stdout
-      //
-      // Request handlers:
-      // - initialize: { id, method: 'initialize', params: { ... } }
-      // - tools/list: { id, method: 'tools/list' }
-      // - tools/call: { id, method: 'tools/call', params: { name, arguments } }
-      // - shutdown: Signal graceful shutdown
-
-      // JSON-RPC 2.0 over stdin/stdout
       const readline = await import('node:readline');
       const rl = readline.createInterface({ input: process.stdin });
 
@@ -138,10 +121,6 @@ export async function createServer(skillsDirectory) {
 
     /**
      * Handle a JSON-RPC 2.0 request.
-     *
-     * @param {Object} request - JSON-RPC request object
-     *        { id?, method: string, params?: any }
-     * @returns {Object} JSON-RPC response or notification
      */
     handleRequest(request) {
       const { id, method, params } = request;
@@ -150,13 +129,12 @@ export async function createServer(skillsDirectory) {
         switch (method) {
           case 'initialize':
             return {
+              jsonrpc: '2.0',
               id,
               result: {
                 protocolVersion: '2024-11-05',
                 capabilities: {
-                  tools: {
-                    listChanged: false,
-                  },
+                  tools: { listChanged: false },
                 },
                 serverInfo: {
                   name: 'openclaw-mcp',
@@ -167,6 +145,7 @@ export async function createServer(skillsDirectory) {
 
           case 'tools/list':
             return {
+              jsonrpc: '2.0',
               id,
               result: {
                 tools: this.getTools(),
@@ -175,9 +154,11 @@ export async function createServer(skillsDirectory) {
 
           case 'tools/call': {
             const { name: toolName, arguments: toolArgs } = params || {};
-            const tool = this.tools.find(t => t.name === toolName);
+            const tool = this.toolMap.get(toolName);
+
             if (!tool) {
               return {
+                jsonrpc: '2.0',
                 id,
                 error: {
                   code: -32602,
@@ -185,20 +166,39 @@ export async function createServer(skillsDirectory) {
                 },
               };
             }
-            // Return the skill's SKILL.md content as the tool's "execution result"
-            // In a full implementation, this would invoke the skill in a sandbox.
-            // For now, returning the skill instructions is sufficient for MCP clients
-            // that pass them to an LLM for execution.
-            return {
-              id,
-              result: {
-                content: [{
-                  type: 'text',
-                  text: tool._skillContent || `Skill "${toolName}" loaded. Execute according to SKILL.md instructions.`,
-                }],
+
+            // Instruction passthrough execution:
+            // Return the SKILL.md body as text content.
+            // The MCP client (an LLM) reads and follows these instructions.
+            const skillContent = tool._skillContent ||
+              `Skill "${toolName}" loaded. No SKILL.md body available.`;
+
+            // Build response with metadata about execution model
+            const content = [
+              {
+                type: 'text',
+                text: skillContent,
               },
+            ];
+
+            // If the tool has typed interface info, include it
+            if (tool._interface) {
+              content.push({
+                type: 'text',
+                text: `\n---\n[effector.interface] input=${tool._interface.input || 'any'} output=${tool._interface.output || 'any'} context=${JSON.stringify(tool._interface.context || [])}`,
+              });
+            }
+
+            return {
+              jsonrpc: '2.0',
+              id,
+              result: { content },
             };
           }
+
+          case 'notifications/initialized':
+            // Client acknowledgment — no response needed
+            return null;
 
           case 'notifications/shutdown':
             console.error('[MCP Server] Shutdown requested');
@@ -206,6 +206,7 @@ export async function createServer(skillsDirectory) {
 
           default:
             return {
+              jsonrpc: '2.0',
               id,
               error: {
                 code: -32601,
@@ -215,6 +216,7 @@ export async function createServer(skillsDirectory) {
         }
       } catch (error) {
         return {
+          jsonrpc: '2.0',
           id,
           error: {
             code: -32603,
@@ -235,12 +237,19 @@ export async function createServer(skillsDirectory) {
   return server;
 }
 
+async function fileExists(filePath) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Start an MCP server and listen on stdin.
  *
- * This is the main entry point for the MCP server.
- *
- * @param {string} skillsDirectory - Directory containing SKILL.md files
+ * @param {string} skillsDirectory - Directory containing skill files
  */
 export async function startServer(skillsDirectory) {
   const server = await createServer(skillsDirectory);
