@@ -1,7 +1,7 @@
 {
   "name": "@effectorhq/skill-mcp",
   "version": "0.1.0",
-  "description": "Bridge between Effector SKILL.md format and Model Context Protocol (MCP)",
+  "description": "Compiler and MCP server that turns SKILL.md capability manifests into cross-runtime AI agent tools",
   "type": "module",
   "main": "src/index.js",
   "bin": {
@@ -18,14 +18,14 @@
     "prepublishOnly": "npm test && npm run lint"
   },
   "keywords": [
-    "effector",
-    "effectorhq",
+    "ai-agent",
     "mcp",
-    "model-context-protocol",
-    "ai",
-    "tools",
-    "skills",
-    "bridge"
+    "compiler",
+    "cross-runtime",
+    "effector",
+    "openai",
+    "langchain",
+    "model-context-protocol"
   ],
   "dependencies": {
     "@effectorhq/core": "file:../effector-core"
