@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — 2026-03-15 (Phase D)
+
+### Added
+- `.gitignore` for Node.js projects
+- `@effectorhq/core` as file dependency (replaces relative imports)
+
+### Changed
+- Replaced TODO markers in `lint` and `build` scripts
+- Updated keywords: `openclaw` → `effector`, `effectorhq`
+- Updated description: `OpenClaw` → `Effector`
+- Cross-repo import in `src/parser.js` → `@effectorhq/core/skill`
+
 ## [0.1.0] - 2026-03-05
 
 ### Added

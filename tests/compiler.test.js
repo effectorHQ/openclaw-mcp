@@ -87,8 +87,13 @@ name = "minimal"
 `;
   const result = parseEffectorToml(toml);
   assert.strictEqual(result.name, 'minimal');
-  assert.strictEqual(result.interface, undefined);
-  assert.strictEqual(result.permissions, undefined);
+  // Core parser always returns interface/permissions objects (with null/default fields)
+  assert.ok(result.interface);
+  assert.strictEqual(result.interface.input, null);
+  assert.strictEqual(result.interface.output, null);
+  assert.ok(result.permissions);
+  assert.strictEqual(result.permissions.network, false);
+  assert.strictEqual(result.permissions.subprocess, false);
 });
 
 // ── compileSkill ───────────────────────────────────────────

@@ -1,7 +1,7 @@
 {
   "name": "@effectorhq/skill-mcp",
   "version": "0.1.0",
-  "description": "Bridge between OpenClaw SKILL.md format and Model Context Protocol (MCP)",
+  "description": "Bridge between Effector SKILL.md format and Model Context Protocol (MCP)",
   "type": "module",
   "main": "src/index.js",
   "bin": {
@@ -12,12 +12,14 @@
   },
   "scripts": {
     "test": "node --test tests/**/*.test.js",
-    "lint": "echo 'TODO: add linting'",
-    "build": "echo 'TODO: add build process'",
-    "start": "node bin/skill-mcp.js serve ./skills"
+    "lint": "node --check src/*.js",
+    "build": "echo 'No build step — pure ESM'",
+    "start": "node bin/skill-mcp.js serve ./skills",
+    "prepublishOnly": "npm test && npm run lint"
   },
   "keywords": [
-    "openclaw",
+    "effector",
+    "effectorhq",
     "mcp",
     "model-context-protocol",
     "ai",
@@ -25,6 +27,9 @@
     "skills",
     "bridge"
   ],
+  "dependencies": {
+    "@effectorhq/core": "file:../effector-core"
+  },
   "author": "effectorHQ Contributors",
   "license": "MIT",
   "repository": {
@@ -34,5 +39,9 @@
   "bugs": {
     "url": "https://github.com/effectorHQ/openclaw-mcp/issues"
   },
-  "homepage": "https://github.com/effectorHQ/openclaw-mcp#readme"
+  "homepage": "https://github.com/effectorHQ/openclaw-mcp#readme",
+  "files": [
+    "bin/",
+    "src/"
+  ]
 }

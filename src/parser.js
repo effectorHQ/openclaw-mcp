@@ -6,7 +6,7 @@
  */
 
 import fs from 'fs/promises';
-import { parseSkillFile, parseYaml } from '../../effector-core/src/skill-parser.js';
+import { parseSkillFile, parseYaml } from '@effectorhq/core/skill';
 
 /**
  * Parse a SKILL.md file from disk.

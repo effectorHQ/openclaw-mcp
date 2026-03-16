@@ -17,6 +17,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { parseSkillFromFile } from './parser.js';
 import { skillToMCPTool, normalizeToolName } from './converter.js';
+import { parseEffectorToml } from '@effectorhq/core/toml';
 
 /**
  * Compile a skill directory into an MCP tool definition.
@@ -258,61 +259,6 @@ function buildInputSchema(toml, skill) {
 }
 
 /**
- * Parse effector.toml content (minimal regex-based parser).
- * Delegates to @effectorhq/core when available, falls back to local parsing.
- */
-function parseEffectorToml(content) {
-  const result = {};
-
-  // Extract simple key-value pairs from [effector] section
-  const extractValue = (key) => {
-    const match = content.match(new RegExp(`^\\s*${key}\\s*=\\s*"(.+?)"`, 'm'));
-    return match ? match[1] : null;
-  };
-
-  const extractBool = (key) => {
-    const match = content.match(new RegExp(`^\\s*${key}\\s*=\\s*(true|false)`, 'm'));
-    return match ? match[1] === 'true' : null;
-  };
-
-  const extractArray = (key) => {
-    const match = content.match(new RegExp(`^\\s*${key}\\s*=\\s*\\[([^\\]]*?)\\]`, 'm'));
-    if (!match) return [];
-    return match[1]
-      .split(',')
-      .map(s => s.trim().replace(/^"|"$/g, ''))
-      .filter(Boolean);
-  };
-
-  result.name = extractValue('name');
-  result.version = extractValue('version');
-  result.type = extractValue('type');
-  result.description = extractValue('description');
-
-  // [effector.interface]
-  if (content.includes('[effector.interface]')) {
-    result.interface = {
-      input: extractValue('input'),
-      output: extractValue('output'),
-      context: extractArray('context'),
-    };
-  }
-
-  // [effector.permissions]
-  if (content.includes('[effector.permissions]')) {
-    result.permissions = {
-      network: extractBool('network'),
-      subprocess: extractBool('subprocess'),
-      envRead: extractArray('env-read'),
-      envWrite: extractArray('env-write'),
-      filesystem: extractArray('filesystem'),
-    };
-  }
-
-  return result;
-}
-
-/**
  * Safely convert a value to a string array.
  * Handles: arrays, objects (use keys), strings, undefined/null.
  */
@@ -332,4 +278,4 @@ async function fileExists(filePath) {
   }
 }
 
-export { parseEffectorToml };
+export { parseEffectorToml } from '@effectorhq/core/toml';
