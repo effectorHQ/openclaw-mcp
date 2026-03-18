@@ -28,7 +28,7 @@
     "model-context-protocol"
   ],
   "dependencies": {
-    "@effectorhq/core": "file:../effector-core"
+    "@effectorhq/core": "^1.0.0"
   },
   "author": "effectorHQ Contributors",
   "license": "MIT",

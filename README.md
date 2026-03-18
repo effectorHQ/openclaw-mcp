@@ -29,13 +29,22 @@ Converts SKILL.md skill definitions into MCP-compatible tool definitions. Your O
 - **Composable Skills**: Combine OpenClaw skills with MCP tools from other sources
 - **Standardized Interoperability**: MCP is the industry standard for AI tool integration
 
-## Quick Start
-
-### Installation
+## Install
 
 ```bash
-npm install -D @effectorhq/skill-mcp
+npm install @effectorhq/skill-mcp
 ```
+
+You can also use the CLI directly without installing globally:
+
+```bash
+npx @effectorhq/skill-mcp ./skills
+npx @effectorhq/skill-mcp --stdio
+```
+
+See the published package on npm: **https://www.npmjs.com/package/@effectorhq/skill-mcp**
+
+## Quick Start
 
 ### Start MCP Server
 
