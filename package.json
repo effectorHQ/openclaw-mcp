@@ -31,7 +31,7 @@
     "@effectorhq/core": "^1.0.0"
   },
   "author": "effectorHQ Contributors",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/effectorHQ/openclaw-mcp.git"

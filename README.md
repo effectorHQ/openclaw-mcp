@@ -4,7 +4,7 @@
 [![Status: Beta](https://img.shields.io/badge/status-beta-yellow)](https://github.com/effectorHQ/REPO-TIERS.md)
 [![CI](https://github.com/effectorHQ/openclaw-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/effectorHQ/openclaw-mcp/actions/workflows/test.yml)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache-2.0-yellow.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 [中文文档](README.zh.md)
@@ -201,4 +201,6 @@ Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT © 2026 effectorHQ Contributors
+
+This project is currently licensed under the Apache 2.0 License 。
+
