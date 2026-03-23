@@ -4,7 +4,7 @@
 [![Status: Beta](https://img.shields.io/badge/status-beta-yellow)](https://github.com/effectorHQ/REPO-TIERS.md)
 [![CI](https://github.com/effectorHQ/openclaw-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/effectorHQ/openclaw-mcp/actions/workflows/test.yml)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org/)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache-2.0-yellow.svg)](LICENSE)
+
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 [中文文档](README.zh.md)
@@ -201,6 +201,5 @@ Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-
-This project is currently licensed under the Apache 2.0 License 。
+This project is currently licensed under the [Apache License, Version 2.0](LICENSE.md) 。
 

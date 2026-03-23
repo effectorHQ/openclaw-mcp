@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/@effectorhq/skill-mcp.svg)](https://www.npmjs.com/package/@effectorhq/skill-mcp)
 [![CI](https://img.shields.io/github/actions/workflow/status/effectorHQ/openclaw-mcp/ci.yml?branch=main)](https://github.com/effectorHQ/openclaw-mcp/actions)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org/)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache-2.0-yellow.svg)](LICENSE)
+
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 [English](README.md)
@@ -191,4 +191,4 @@ npm run build
 
 ## 许可证
 
-This project is currently licensed under the Apache 2.0 License 。
+This project is currently licensed under the [Apache License, Version 2.0](LICENSE.md) 。

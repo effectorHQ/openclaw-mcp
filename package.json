@@ -13,7 +13,7 @@
   "scripts": {
     "test": "node --test tests/**/*.test.js",
     "lint": "node --check src/*.js",
-    "build": "echo 'No build step — pure ESM'",
+    "build": "echo 'No build step \u2014 pure ESM'",
     "start": "node bin/skill-mcp.js serve ./skills",
     "prepublishOnly": "npm test && npm run lint"
   },
@@ -43,7 +43,7 @@
   "files": [
     "bin/",
     "src/",
-    "LICENSE",
+    "LICENSE.md",
     "README.md"
   ]
 }
